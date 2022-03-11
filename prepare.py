@@ -47,7 +47,7 @@ if len(sys.argv) < 2 :
 datasets = []
 for arg in sys.argv[1:]:
     print(f"Parsing  {arg}")
-    df = pd.read_csv(arg, header=0, names=["id", "response"])
+    df = pd.read_csv(arg, header=0, names=["response"])
     df["source"] = arg
     datasets.append(df)
 
