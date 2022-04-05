@@ -108,4 +108,4 @@ stats["per_negative"] = stats["is_negative"]/stats["response"]
 stats["per_positive"] = stats["is_positive"]/stats["response"]
 stats["per_neutral"] = stats["is_neutral"]/stats["response"]
 
-stats.to_csv("summaries/sentiment_stats.csv", index=False)
+stats.to_csv("summaries/sentiment_stats.csv")

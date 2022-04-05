@@ -12,7 +12,9 @@
     1. Run `python -m spacy download en_core_web_sm`
 
 ## Configuring Stop Word and Mapping
-Stop Words are editable in `data/stopwords.csv`. Simply append a new line with the word to remove
+Stop Words are editable in `data/stopwords.csv`. Append a new line with the word to remove,
+
+To fix common typos, or merge related terms you can edit `data/mapping.csv`.  
 
 ## Running Scripts
 
@@ -20,15 +22,6 @@ Stop Words are editable in `data/stopwords.csv`. Simply append a new line with t
 1. Make sure all your input documents are well formatted CSVs in ASCII or UTF8 Encoding
 2. Run `python prepare.py FIILENAME_1.csv FIILENAME_2.csv FIILENAME_3.csv ...`
 3. Term frequencies and wordclouds should now be in a `/summaries` Folder.
-
-| File                 | Description                                                                                                                                                    |
-|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| bigram_freq.csv      | Contains all bigrams with frequency of occurrence and [PMI Score](https://medium.com/dataseries/understanding-pointwise-mutual-information-in-nlp-e4ef75ecb57a) |
-| dict.pickle          | The generated Dictionary for LDA Modeling                                                                                                                      |
-| term_freq.csv        | Term occurance frequency (after removal of stopwords, maping, bigram formation, and lemmatization)                                                             |
-| term_freq.csv        | Term occurance frequency (after removal of stopwords and maping)                                                                                               |
- | WordCloud_final.png  | Graphic: Word Cloud of term occurance (after removal of stopwords, maping, bigram formation, and lemmatization)                                                |
- | WordCloud_nostop.png | Graphic: Word Cloud of term occurance (after removal of stopwords and maping)                                                                                  |
 
 Order of Steps:
 1. Tokenize
@@ -43,3 +36,19 @@ Order of Steps:
 2. Run `python lda.py`
 3. Wait, This takes a while
 4. Term frequencies and wordclouds should now be in a `/summaries` Folder.
+
+### VADER Sentiment Analysis
+1. Run `python vader.py FIILENAME_1.csv FIILENAME_2.csv FIILENAME_3.csv `
+2. Summaries are generated into `/summaries` Folder
+
+## Output Files
+
+| File                 | Description                                                                                                                                                     |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| bigram_freq.csv      | Contains all bigrams with frequency of occurrence and [PMI Score](https://medium.com/dataseries/understanding-pointwise-mutual-information-in-nlp-e4ef75ecb57a) |
+| dict.pickle          | The generated Dictionary for LDA Modeling                                                                                                                       |
+| term_freq.csv        | Term occurance frequency (after removal of stopwords, maping, bigram formation, and lemmatization)                                                              |
+| sentiment_all.csv    | Per-response sentiment scores                                                                                                                                   |
+| sentiment_stats.csv  | Aggregate sentiment scores per file                                                                                                                             |
+ | WordCloud_final.png  | Graphic: Word Cloud of term occurance (after removal of stopwords, maping, bigram formation, and lemmatization)                                                 |
+ | WordCloud_nostop.png | Graphic: Word Cloud of term occurance (after removal of stopwords and maping)                                                                                   |
