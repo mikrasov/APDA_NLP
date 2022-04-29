@@ -54,7 +54,7 @@ for arg in sys.argv[1:]:
 
 df = pd.concat(datasets)
 data = df.response.values.tolist()
-data = [r.replace("true##","") for r in data]
+data = [str(r).replace("true##","") for r in data]
 print("Data Loaded")
 
 #%% Prepare Tokens
