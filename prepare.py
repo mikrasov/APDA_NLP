@@ -134,9 +134,12 @@ dataset = dataset.apply(sentiment, axis=1)
 
 #%%% Form Bigrams
 print("Make Bigrams/ TriGrams")
-bigram = gensim.models.Phrases(dataset["tokens"], min_count=1, threshold=0.01,  connector_words=gensim.models.phrases.ENGLISH_CONNECTOR_WORDS)
+bigram = gensim.models.Phrases(dataset["tokens"], min_count=3,  connector_words=gensim.models.phrases.ENGLISH_CONNECTOR_WORDS)
+trigram = gensim.models.Phrases(bigram[dataset["tokens"]], threshold=10)
 bigram_mod = gensim.models.phrases.Phraser(bigram)
-dataset["lda_tokens"] = dataset["tokens"].apply(lambda r: bigram_mod[r])
+trigram_mod = gensim.models.phrases.Phraser(trigram)
+
+dataset["lda_tokens"] = dataset["tokens"].apply(lambda r: trigram_mod[bigram_mod[r]])
 
 
 
