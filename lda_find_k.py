@@ -3,6 +3,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pickle
 import pandas as pd
+import numpy as np
+
+CORPUSES = [
+    ("clean", "lda_tokens"),
+    # ("raw", "raw_tokens"),
+    #  ("no_syn", "syn_tokens"),
+]
+
+
 
 def buildModel(corpus, id2word, num_topics ):
     return gensim.models.ldamodel.LdaModel(corpus=corpus,
@@ -10,8 +19,8 @@ def buildModel(corpus, id2word, num_topics ):
                                                 num_topics=num_topics,
                                                 random_state=1000,
                                                 update_every=1,
-                                                chunksize=100,
-                                                passes=10,
+                                                chunksize=100000,
+                                                passes=20,
                                                 alpha='auto',
                                                 per_word_topics=True)
 
@@ -19,8 +28,8 @@ def buildModel(corpus, id2word, num_topics ):
 
 def find_optimal_k(corpus,id2word,tokens, file_prefix):
     min_topics = 2
-    max_topics = 25
-    step = 2
+    max_topics = 100
+    step = 5
 
     print(f"Searching for optimal number of topics for '{file_prefix}'")
     print("Try to maximize Coherence and minimize Perplexity")
@@ -42,39 +51,24 @@ def find_optimal_k(corpus,id2word,tokens, file_prefix):
             model_list.append([k, coherence_c_v,  perplexity, i, topic ])
 
     topicDf = pd.DataFrame(model_list, columns=["Num_Topics", "Coherence", "Perplexity", "Topic Number", "Terms"])
+
+    print("Calculating optimal perplexity and coherence")
+    topicDf["Coherence_norm"] = (topicDf.Coherence - topicDf.Coherence.min()) / (topicDf.Coherence.max() - topicDf.Coherence.min())
+    topicDf["Perplexity_norm"] = 1- ((topicDf.Perplexity - topicDf.Perplexity.min()) / (topicDf.Perplexity.max() - topicDf.Perplexity.min()))
+
+    topicDf["Distance"] = topicDf.apply(lambda r: np.sqrt(2*((r.Coherence_norm - topicDf.Coherence_norm.max()) ** 2) + (r.Perplexity_norm - topicDf.Perplexity_norm.max()) ** 2), axis=1)
+    BEST_K = topicDf[topicDf.Distance == topicDf.Distance.min()].iloc[0]
+    print(f"\n Best Num Topics {BEST_K.Num_Topics}")
     topicDf.to_csv(f"summaries/{file_prefix}_Topics_by_k.csv", index=False, float_format="%.3f")
 
-    dx = topicDf.groupby("Num_Topics").first()
-    fig, ax = plt.subplots(figsize=(9, 5))
-    ax2 = ax.twinx()
-    ax2.set_ylim(-5, -20)
-    sns.lineplot(ax=ax, x="Num_Topics", y="Coherence", data=dx, label="Coherence")
-    sns.lineplot(ax=ax2, x="Num_Topics", y="Perplexity", data=dx, color="orange", label="Perplexity")
-
-    ax.set(ylabel="Coherence score", xlabel="Num Topics")
-
-    fig.tight_layout()
-    plt.savefig(f"summaries/{file_prefix}_Coherence_and_Perplexity.png", bbox_inches='tight')
-    plt.show()
-    print("Done")
 
 
 #%% Find optimal num topics
 if __name__ == '__main__':
 
-    # Setup Graphs
-    sns.set(rc={'figure.figsize': (9, 5)}, font="Calibri", font_scale=1.2)
-    sns.set_style("whitegrid", {'axes.grid': False})
-
-
-    CORPUSES = [
-        ("clean", "lda_tokens"),
-        # ("raw", "raw_tokens"),
-        #  ("no_syn", "syn_tokens"),
-    ]
 
     for name, token_col in CORPUSES:
-        CORPUS_PATH = f"summaries/{name}_DO_NOT_SHARE.pickle"
+        CORPUS_PATH = f"DO_NOT_SHARE/{name}.pickle"
 
 
         with open(CORPUS_PATH, 'rb') as handle:
@@ -82,3 +76,30 @@ if __name__ == '__main__':
         (tokens, id2word, corpus) = loaded_data
 
         find_optimal_k(*loaded_data, name)
+
+
+#%% Graph
+if __name__ == '__main__':
+
+    for name, token_col in CORPUSES:
+        CORPUS_PATH = f"DO_NOT_SHARE/{name}.pickle"
+
+        # Setup Graphs
+        sns.set(rc={'figure.figsize': (9, 5)}, font="Calibri", font_scale=1.2)
+        sns.set_style("whitegrid", {'axes.grid': False})
+
+        topicDf = pd.read_csv(f"summaries/{name}_Topics_by_k.csv")
+        dx = topicDf.groupby("Num_Topics", as_index=False).first().copy()
+        fig, ax = plt.subplots(figsize=(9, 5))
+        ax2 = ax.twinx()
+        ax2.set_ylim(-7.5, -9)
+        sns.lineplot(ax=ax, x="Num_Topics", y="Coherence", data=dx, label="Coherence")
+        sns.lineplot(ax=ax2, x="Num_Topics", y="Perplexity", data=dx, color="orange", label="Perplexity")
+
+        ax.set(ylabel="Coherence score", xlabel="Num Topics")
+
+        fig.tight_layout()
+        plt.savefig(f"summaries/{name}_Coherence_and_Perplexity.png", bbox_inches='tight')
+        plt.show()
+    print("Done")
+

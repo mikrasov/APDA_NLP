@@ -13,6 +13,7 @@ import pickle
 from wordcloud import WordCloud
 
 os.makedirs("summaries/", exist_ok=True)
+os.makedirs("private/", exist_ok=True)
 
 # Setup lemmatization
 try:
@@ -30,6 +31,14 @@ nltk.download("vader_lexicon")
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 sent_analyzer = SentimentIntensityAnalyzer()
+
+# Setup LDA
+
+def buildModel(corpus, id2word, k):
+
+    return gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2word, num_topics=k,random_state=1000, update_every=1,chunksize=100000,passes=20, alpha='auto',per_word_topics=True)
+
+
 
 #Setup Graphs
 sns.set(rc={'figure.figsize':(9,5)}, font="Calibri", font_scale = 1.2)
@@ -68,8 +77,17 @@ except Exception as e:
     print("\n")
     sys.exit(1)
 
-
+# Strip export errors
 dataset["response"] = dataset["response"].str.replace("true##","")
+dataset["response"] = dataset["response"].str.replace("false##","")
+dataset["response"] = dataset["response"].str.replace("Äú","")
+dataset["response"] = dataset["response"].str.replace("Äô","")
+dataset["response"] = dataset["response"].str.replace("Äî","")
+dataset["response"] = dataset["response"].str.replace("Äù","")
+dataset["response"] = dataset["response"].str.replace("Äì","")
+dataset["response"] = dataset["response"].str.replace("Ä¶","")
+
+
 print("Data Loaded")
 
 #%% Prepare Tokens
@@ -178,6 +196,7 @@ with open('summaries/synonym_map.csv', 'w') as f:
 
 dataset["syn_tokens"] = dataset["lda_tokens"].apply(lambda r: [syn_map[t] for t in r])
 
+
 #%% Create Dictionary for LDA
 CORPUSES = [
     ("raw", "raw_tokens"),
@@ -185,8 +204,10 @@ CORPUSES = [
     ("no_syn","syn_tokens"),
 ]
 
+prepared_input = {}
+
 for name, token_col in CORPUSES:
-    CORPUS_PATH = f"summaries/{name}_DO_NOT_SHARE.pickle"
+    CORPUS_PATH = f"DO_NOT_SHARE/{name}.pickle"
     TERM_PATH = f"summaries/{name}_term_freq.csv"
     WORDCLOUD_PATH = f"summaries/{name}_WordCloud.png"
     print(f"Saving '{name}' Corpus for LDA Modeling to '{CORPUS_PATH}'")
@@ -194,6 +215,7 @@ for name, token_col in CORPUSES:
     id2word = gensim.corpora.Dictionary(tokens)
     corpus = [id2word.doc2bow(response) for response in tokens]
 
+    prepared_input[name]=(corpus,id2word,tokens)
     with open(CORPUS_PATH, 'wb') as handle:
         pickle.dump((corpus,id2word,tokens), handle, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -205,6 +227,45 @@ for name, token_col in CORPUSES:
     print(f"Saving '{name}' Wordcloud image to '{WORDCLOUD_PATH}'")
     plotWordCloud(dataset[token_col], WORDCLOUD_PATH)
 
-#%% Sanitized file
+
+#%% RUN LDA
+K = 29
+print(f"Building LDA Model with *{K}* topics")
+(corpus,id2word,_) = prepared_input["clean"]
+model = buildModel(corpus, id2word, K)
+with open(f"summaries/clean_model.pickle", 'wb') as handle:
+    pickle.dump(model, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+print(f"Model Ready")
+
+
+#%%% Apply topics back to document
+def apply_topics(row):
+    topics = model.get_document_topics(id2word.doc2bow(row["lda_tokens"]),0)
+
+    best_topic, best_prob = topics[0]
+    for topic_num, prob in topics:
+        row[f"lda_topic_{topic_num}_prob"] = prob
+        if prob> best_prob:
+            best_topic, best_prob = topic_num, prob
+
+    row[f"lda_best_topic"] = best_topic
+    return row
+
+dataset = dataset.apply(apply_topics, axis=1)
+
+
+print(f"Topics and Examples:")
+for topic_num in range(0,model.num_topics):
+
+    topic = [token for token, score in model.show_topic(topic_num, topn=25)]
+    print(f"Topic {topic_num:<2}: {topic}")
+
+    exemplar = dataset[dataset[f"lda_topic_{topic_num}_prob"] == dataset[f"lda_topic_{topic_num}_prob"].max()].iloc[0]
+    print(f"[{exemplar.id}-{exemplar.question}]: {exemplar.response} \n");
+
+#%% Create Sanitized file
+print("Creating Sanitized File")
 dataset.drop(columns=["response","raw_tokens", "tokens", "lda_tokens", "syn_tokens"]).to_csv("summaries/dataset_sanitized.csv")
 
+print("\nAll Done")
