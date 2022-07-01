@@ -13,7 +13,7 @@ import pickle
 from wordcloud import WordCloud
 
 os.makedirs("summaries/", exist_ok=True)
-os.makedirs("private/", exist_ok=True)
+os.makedirs("DO_NOT_SHARE/", exist_ok=True)
 
 # Setup lemmatization
 try:

@@ -45,6 +45,10 @@ Order of Steps:
 
 ## Output Files
 
+Files in the `DO_NOT_SHARE` directory contain full responses from participants. Do not share these with anyone not on IRB.
+
+Files in `summaries` folder should be safe to share. All private data including response text is stripped.
+
  There are three prefixes
 * raw: based on raw tokens from responses
 * clean: raw with stopwords removed, mapping applied, and lemmatized
@@ -54,7 +58,7 @@ Order of Steps:
 |---------------------------------------|------------------------------------------------------------------------------------------------|
 | dataset_sanitized.csv                 | Contains stats about individual responses, with sensative data (the response content stripped) |
 | synonym_map.csv                       | Generated mapping of words to synonyms                                                         |
+| {prefix}_model.pickle                 | LDA model, can be reused to tag public data.                                                   |
 | {prefix}_Coherence_and_Perplexity.png | Graph of LDA topic coherence vs perplexity by k (number of topics                              |
-| {prefix}_DO_NOT_SHARE.pickle          | Stores corpus needed for generating LDA topics, contains sensitive data                        |
 | {prefix}_term_freq.csv                | Term occurance frequency                                                                       |
 | {prefix}_WordCloud.png                | Graphic: Word Cloud of term occurance                                                          |
