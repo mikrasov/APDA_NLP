@@ -18,37 +18,43 @@ To fix common typos, or merge related terms you can edit `data/mapping.csv`.
 
 ## Running Scripts
 
-### Term Frequencies
-1. Make sure all your input documents are well formatted CSVs in ASCII or UTF8 Encoding
-2. Run `python prepare.py FIILENAME_1.csv FIILENAME_2.csv FIILENAME_3.csv ...`
-3. Term frequencies and wordclouds should now be in a `/summaries` Folder.
+### Running LDA + VADER (Sentiment Analysis)
+1. Make sure  your input document is well formatted CSVs in ASCII or UTF8 Encoding
+2. File expected to have a header: `id, question, response`'`
+3. Run `python prepare.py example.csv`
+4. Term frequencies and wordclouds should now be in a `/summaries` Folder.
 
 Order of Steps:
 1. Tokenize
 2. Remove Stop Words
 3. Applying Mapping
-4. Make Bigrams/ TriGrams
-5. Lemmatize
-6. Create Dictionary for Modeling
+4. Run VADER
+5. Make Bigrams/ TriGrams
+6. Lemmatize 
+7. Remove Stop Words (Again)
+8. Re-Applying Mapping (Again)
+9. Create Dictionary for LDA Modeling
 
 ### LDA Topic Model
 1. Make sure you have run `prepare.py`
-2. Run `python lda.py`
+2. Run `python lda_find_k.py`
 3. Wait, This takes a while
-4. Term frequencies and wordclouds should now be in a `/summaries` Folder.
+4. Topics by k-value (number of total topics) are now in `/summaries` Folder.
 
-### VADER Sentiment Analysis
-1. Run `python vader.py FIILENAME_1.csv FIILENAME_2.csv FIILENAME_3.csv `
-2. Summaries are generated into `/summaries` Folder
+
 
 ## Output Files
 
-| File                 | Description                                                                                                                                                     |
-|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| bigram_freq.csv      | Contains all bigrams with frequency of occurrence and [PMI Score](https://medium.com/dataseries/understanding-pointwise-mutual-information-in-nlp-e4ef75ecb57a) |
-| dict.pickle          | The generated Dictionary for LDA Modeling                                                                                                                       |
-| term_freq.csv        | Term occurance frequency (after removal of stopwords, maping, bigram formation, and lemmatization)                                                              |
-| sentiment_all.csv    | Per-response sentiment scores                                                                                                                                   |
-| sentiment_stats.csv  | Aggregate sentiment scores per file                                                                                                                             |
- | WordCloud_final.png  | Graphic: Word Cloud of term occurance (after removal of stopwords, maping, bigram formation, and lemmatization)                                                 |
- | WordCloud_nostop.png | Graphic: Word Cloud of term occurance (after removal of stopwords and maping)                                                                                   |
+ There are three prefixes
+* raw: based on raw tokens from responses
+* clean: raw with stopwords removed, mapping applied, and lemmatized
+* no_syn: clean with synonyms merged
+
+| File                                  | Description                                                                                    |
+|---------------------------------------|------------------------------------------------------------------------------------------------|
+| dataset_sanitized.csv                 | Contains stats about individual responses, with sensative data (the response content stripped) |
+| synonym_map.csv                       | Generated mapping of words to synonyms                                                         |
+| {prefix}_Coherence_and_Perplexity.png | Graph of LDA topic coherence vs perplexity by k (number of topics                              |
+| {prefix}_DO_NOT_SHARE.pickle          | Stores corpus needed for generating LDA topics, contains sensitive data                        |
+| {prefix}_term_freq.csv                | Term occurance frequency                                                                       |
+| {prefix}_WordCloud.png                | Graphic: Word Cloud of term occurance                                                          |

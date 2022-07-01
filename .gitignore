@@ -1,5 +1,5 @@
 # Project exclude paths
-data/PublicSurveyResponsesAPDA_*
+data/PublicSurveyResponsesAPDA*
 summaries/
 /desktop.ini
 .idea
