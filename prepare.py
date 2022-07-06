@@ -80,12 +80,21 @@ except Exception as e:
 # Strip export errors
 dataset["response"] = dataset["response"].str.replace("true##","")
 dataset["response"] = dataset["response"].str.replace("false##","")
+
+dataset["response"] = dataset["response"].str.replace("‚Äô","'")
+dataset["response"] = dataset["response"].str.replace("‚Äú","\"")
+dataset["response"] = dataset["response"].str.replace("‚Äù","\"")
+dataset["response"] = dataset["response"].str.replace("‚Äî"," ")
+
 dataset["response"] = dataset["response"].str.replace("Äú","")
 dataset["response"] = dataset["response"].str.replace("Äô","")
 dataset["response"] = dataset["response"].str.replace("Äî","")
 dataset["response"] = dataset["response"].str.replace("Äù","")
 dataset["response"] = dataset["response"].str.replace("Äì","")
 dataset["response"] = dataset["response"].str.replace("Ä¶","")
+dataset["response"] = dataset["response"].str.replace("‚","")
+
+
 
 
 print("Data Loaded")
