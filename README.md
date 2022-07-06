@@ -26,13 +26,12 @@ To fix common typos, or merge related terms you can edit `data/mapping.csv`.
 
 Order of Steps:
 1. Tokenize
-2. Remove Stop Words
-3. Applying Mapping
-4. Run VADER
+3. Run VADER
+4. Remove Stop Words
 5. Make Bigrams/ TriGrams
 6. Lemmatize 
 7. Remove Stop Words (Again)
-8. Re-Applying Mapping (Again)
+8. Applying Mapping
 9. Create Dictionary for LDA Modeling
 
 ### LDA Topic Model

@@ -90,19 +90,6 @@ dataset["response"] = dataset["response"].str.replace("Ä¶","")
 
 print("Data Loaded")
 
-#%% Prepare Tokens
-# Tokenize
-print("Tokenizing")
-dataset["raw_tokens"] = dataset["response"].apply(lambda r: gensim.utils.simple_preprocess(str(r), deacc=True))
-
-
-print("Removing Stop Words")
-dataset["tokens"] = dataset["raw_tokens"].apply(lambda r: [word for word in gensim.utils.simple_preprocess(str(r)) if word not in stopwords])
-
-
-print("Applying Mapping")
-mapping = pd.read_csv("data/mapping.csv", index_col="From")["To"].to_dict()
-dataset["tokens"] = dataset["tokens"].apply(lambda r: [mapping[word] if word in mapping else word for word in r])
 
 
 #%%% Starting Sentiment Analysis
@@ -133,30 +120,40 @@ print("Running Sentiment Analysis (VADAR) on Responses-Stopwords")
 dataset = dataset.apply(sentiment, axis=1)
 
 #%%% Form Bigrams
+#%% Prepare Tokens
+# Tokenize
+print("Tokenizing")
+dataset["tokens"] = dataset["response"].apply(lambda r: gensim.utils.simple_preprocess(str(r), deacc=True))
+
+
+
+print("Removing Stop Words")
+dataset["lda_tokens"] = dataset["tokens"].apply(lambda r: [word for word in gensim.utils.simple_preprocess(str(r)) if word not in stopwords])
+
+
+
 print("Make Bigrams/ TriGrams")
-bigram = gensim.models.Phrases(dataset["tokens"], min_count=3,  connector_words=gensim.models.phrases.ENGLISH_CONNECTOR_WORDS)
-trigram = gensim.models.Phrases(bigram[dataset["tokens"]], threshold=10)
+bigram = gensim.models.Phrases(dataset["lda_tokens"], min_count=3,  connector_words=gensim.models.phrases.ENGLISH_CONNECTOR_WORDS)
+trigram = gensim.models.Phrases(bigram[dataset["lda_tokens"]], threshold=10)
 bigram_mod = gensim.models.phrases.Phraser(bigram)
 trigram_mod = gensim.models.phrases.Phraser(trigram)
 
-dataset["lda_tokens"] = dataset["tokens"].apply(lambda r: trigram_mod[bigram_mod[r]])
-
-
+dataset["lda_tokens"] = dataset["lda_tokens"].apply(lambda r: trigram_mod[bigram_mod[r]])
 
 
 #%%% Lemmatize
 print("Preforming Lemmatization (for LDA)")
-
 dataset["lda_tokens"] = dataset["lda_tokens"].apply(lambda r: [token.lemma_ for token in nlp(" ".join(r)) if token.pos_ in ['NOUN', 'ADJ', 'VERB', 'ADV']])
 
+
+
+print("Applying Mapping")
+mapping = pd.read_csv("data/mapping.csv", index_col="From")["To"].to_dict()
+dataset["lda_tokens"] = dataset["lda_tokens"].apply(lambda r: [mapping[word] if word in mapping else word for word in r])
 
 print("Removing Stop Words (again after lemmatization)")
 dataset["lda_tokens"] = dataset["lda_tokens"].apply(lambda r: [word for word in gensim.utils.simple_preprocess(str(r)) if word not in stopwords])
 
-
-print("Re-Applying Mapping (after lemmatization)")
-mapping = pd.read_csv("data/mapping.csv", index_col="From")["To"].to_dict()
-dataset["lda_tokens"] = dataset["lda_tokens"].apply(lambda r: [mapping[word] if word in mapping else word for word in r])
 
 
 
@@ -202,7 +199,7 @@ dataset["syn_tokens"] = dataset["lda_tokens"].apply(lambda r: [syn_map[t] for t 
 
 #%% Create Dictionary for LDA
 CORPUSES = [
-    ("raw", "raw_tokens"),
+    ("raw", "tokens"),
     ("clean", "lda_tokens"),
     ("no_syn","syn_tokens"),
 ]
@@ -269,6 +266,6 @@ for topic_num in range(0,model.num_topics):
 
 #%% Create Sanitized file
 print("Creating Sanitized File")
-dataset.drop(columns=["response","raw_tokens", "tokens", "lda_tokens", "syn_tokens"]).to_csv("summaries/dataset_sanitized.csv")
+dataset.drop(columns=["response", "tokens", "lda_tokens", "syn_tokens"]).to_csv("summaries/dataset_sanitized.csv")
 
 print("\nAll Done")

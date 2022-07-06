@@ -28,8 +28,8 @@ def buildModel(corpus, id2word, num_topics ):
 
 def find_optimal_k(corpus,id2word,tokens, file_prefix):
     min_topics = 2
-    max_topics = 100
-    step = 5
+    max_topics = 50
+    step = 1
 
     print(f"Searching for optimal number of topics for '{file_prefix}'")
     print("Try to maximize Coherence and minimize Perplexity")
@@ -52,13 +52,15 @@ def find_optimal_k(corpus,id2word,tokens, file_prefix):
 
     topicDf = pd.DataFrame(model_list, columns=["Num_Topics", "Coherence", "Perplexity", "Topic Number", "Terms"])
 
-    print("Calculating optimal perplexity and coherence")
-    topicDf["Coherence_norm"] = (topicDf.Coherence - topicDf.Coherence.min()) / (topicDf.Coherence.max() - topicDf.Coherence.min())
-    topicDf["Perplexity_norm"] = 1- ((topicDf.Perplexity - topicDf.Perplexity.min()) / (topicDf.Perplexity.max() - topicDf.Perplexity.min()))
+    if len(model_list)>1:
+        print("Calculating optimal perplexity and coherence")
+        topicDf["Coherence_norm"] = (topicDf.Coherence - topicDf.Coherence.min()) / (topicDf.Coherence.max() - topicDf.Coherence.min())
+        topicDf["Perplexity_norm"] = 1- ((topicDf.Perplexity - topicDf.Perplexity.min()) / (topicDf.Perplexity.max() - topicDf.Perplexity.min()))
 
-    topicDf["Distance"] = topicDf.apply(lambda r: np.sqrt(2*((r.Coherence_norm - topicDf.Coherence_norm.max()) ** 2) + (r.Perplexity_norm - topicDf.Perplexity_norm.max()) ** 2), axis=1)
-    BEST_K = topicDf[topicDf.Distance == topicDf.Distance.min()].iloc[0]
-    print(f"\n Best Num Topics {BEST_K.Num_Topics}")
+        topicDf["Distance"] = topicDf.apply(lambda r: np.sqrt(2*((r.Coherence_norm - topicDf.Coherence_norm.max()) ** 2) + (r.Perplexity_norm - topicDf.Perplexity_norm.max()) ** 2), axis=1)
+        BEST_K = topicDf[topicDf.Distance == topicDf.Distance.min()].iloc[0]
+        print(f"\n Best Num Topics {BEST_K.Num_Topics}")
+
     topicDf.to_csv(f"summaries/{file_prefix}_Topics_by_k.csv", index=False, float_format="%.3f")
 
 
