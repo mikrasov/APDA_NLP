@@ -238,7 +238,7 @@ for name, token_col in CORPUSES:
 
 
 #%% RUN LDA
-K = 29
+K = 8
 print(f"Building LDA Model with *{K}* topics")
 (corpus,id2word,_) = prepared_input["clean"]
 model = buildModel(corpus, id2word, K)
